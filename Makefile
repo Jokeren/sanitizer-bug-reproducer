@@ -46,6 +46,8 @@ LINK_LIBS      := -lsanitizer-public
 NVCC_FLAGS     := --fatbin --keep-device-functions -Xptxas --compile-as-tools-patch
 NVCC_FLAGS     += $(INCLUDE_FLAGS)
 
+INSTRUMENTOR ?= 0
+
 ifeq ($(dbg),1)
     NVCC_FLAGS += -g -G
 endif
@@ -66,15 +68,18 @@ GENCODE_FLAGS  += -gencode arch=compute_$(HIGHEST_SM),code=compute_$(HIGHEST_SM)
 # Target rules
 all: build
 
-build: libtool.so instrumentor.fatbin
+build: libtool.so empty.fatbin cas.fatbin
 
 libtool.so: tool.cc
-	$(HOST_COMPILER) $(INCLUDE_FLAGS) $(LINK_FLAGS) -o $@ $< $(LINK_LIBS)
+	$(HOST_COMPILER) $(INCLUDE_FLAGS) $(LINK_FLAGS) -o $@ $< $(LINK_LIBS) -DINSTRUMENTOR=$(INSTRUMENTOR)
 
-instrumentor.fatbin: instrumentor.cu
+empty.fatbin: empty.cu
+	$(NVCC) $(NVCC_FLAGS) $(GENCODE_FLAGS) -o $@ -c $<
+
+cas.fatbin: cas.cu
 	$(NVCC) $(NVCC_FLAGS) $(GENCODE_FLAGS) -o $@ -c $<
 
 clean:
-	rm -f libtool.so instrumentor.fatbin
+	rm -f libtool.so empty.fatbin cas.fatbin
 
 clobber: clean

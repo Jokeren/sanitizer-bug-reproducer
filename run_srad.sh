@@ -2,6 +2,8 @@
 
 CUDA_PATH=/usr/local/cuda
 
+make clean
+make
 cd samples/srad
 make clean
 make
